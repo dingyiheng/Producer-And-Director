@@ -26,29 +26,31 @@ void Player::read(string name, string script)
 void Player::act()
 {
 	while (isActive) {
-		if (!retrieving) {
-			// acting
-			if (!lines.empty()) {
-				if (iter != lines.end()) {
-					play.recite(iter, sceneCount);
-					iter++;
-				}
-				else {
-					exit();
-					retrieving = true;
-				}
-			}
-			
-			// no job anymore
-			if (lines.empty() && play.checkPlayFinished()) {
-				deactive();
-			}
+		unique_lock<mutex> lock(m_retrieving);
 
-			if (play.checkStopFlag()){
-				busy = false;
+		cv_retrieving.wait(lock, [&]{
+			return !retrieving ;
+		});
+
+		if (!lines.empty()) {
+			if (iter != lines.end()) {
+				play.recite(iter, sceneCount);
+				iter++;
+			}
+			else {
+				exit();
+				retrieving = true;
 			}
 		}
-		// else is waiting
+
+		// no job anymore
+		if (lines.empty() && play.checkPlayFinished()) {
+			deactive();
+		}
+
+		if (play.checkStopFlag()){
+			busy = false;
+		}
 	}
 }
 
@@ -70,6 +72,7 @@ void Player::enter(int sceneCounter, string name, string script)
 	}
 	else{
 		retrieving = false;
+		cv_retrieving.notify_all();
 	}
 }
 
@@ -114,4 +117,9 @@ void Player::reset(){
 
 void Player::clearLines(){
 	lines.clear();
+}
+
+void Player::releaseRetrieving(){
+	retrieving = false;
+	cv_retrieving.notify_all();
 }

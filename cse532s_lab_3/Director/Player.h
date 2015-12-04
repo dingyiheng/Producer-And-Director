@@ -17,6 +17,7 @@ public:
 	void join();
 	void reset();
 	void clearLines();
+	void releaseRetrieving();
 
 	bool isbusy();
 	
@@ -34,6 +35,9 @@ private:
 	LineIter iter;
 	Play& play;
 	thread t;
+
+	mutex m_retrieving;
+	condition_variable cv_retrieving;
 };
 
 #endif

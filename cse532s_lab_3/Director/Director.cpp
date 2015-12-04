@@ -292,6 +292,9 @@ void Director::emergencyStop() {
 		players[i]->deactive();
 	}
 	play->emergentStop();
+	for (int i = 0; i < maximum; i++) {
+		players[i]->releaseRetrieving();
+	}
 	ACE_Reactor::instance()->end_reactor_event_loop();
 }
 
@@ -306,3 +309,4 @@ void Director::clearAllLines(){
 		players[i]->clearLines();
 	}
 }
+
